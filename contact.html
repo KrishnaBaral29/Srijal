@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>Contact Us - 'D'Krishna's Portfolio</title>
+    
+    <!-- Preload CSS files -->
+    <link rel="preload" href="style.css" as="style">
+    <link rel="preload" href="css/contact.css" as="style">
+    
+    <!-- CSS files -->
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="css/contact.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700&display=swap">
+</head>
+<body class="contact-page">
+    <nav class="navbar">
+        <div class="logo">'D'Krishna</div>
+        <div class="navigation-buttons">
+            <a href="index.html" class="nav-button">Home</a>
+            <a href="about.html" class="nav-button">About Me</a>
+            <a href="projects.html" class="nav-button">Projects</a>
+            <a href="contact.html" class="nav-button active">Contact Us</a>
+        </div>
+    </nav>
+
+    <div class="contact-container">
+        <h2>
+            <span>G</span>
+            <span>e</span>
+            <span>t</span>
+            <span>&nbsp;</span>
+            <span>I</span>
+            <span>n</span>
+            <span>&nbsp;</span>
+            <span>T</span>
+            <span>o</span>
+            <span>u</span>
+            <span>c</span>
+            <span>h</span>
+        </h2>
+        <form id="contactForm" class="contact-form">
+            <div class="form-group">
+                <label for="name">Name:</label>
+                <input type="text" id="name" name="name" required>
+                <span class="error-message" id="nameError">This field is required</span>
+            </div>
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+                <span class="error-message" id="emailError">This field is required</span>
+            </div>
+            <div class="form-group">
+                <label for="message">Message:</label>
+                <textarea id="message" name="message" required disabled></textarea>
+                <span class="error-message" id="messageError">This field is required</span>
+            </div>
+            <div class="form-group">
+                <button type="submit" id="submitBtn">Send Message</button>
+            </div>
+            <div id="formMessage" class="form-message"></div>
+            <div id="countdown" class="countdown"></div>
+        </form>
+    </div>
+
+    <script type="module">
+        import config from './js/config.js';
+        
+        let countdownInterval;
+        let isWaitingPeriod = false;
+        const messageBox = document.getElementById('message');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const nameError = document.getElementById('nameError');
+        const emailError = document.getElementById('emailError');
+        const messageError = document.getElementById('messageError');
+        const submitBtn = document.getElementById('submitBtn');
+        const formMessage = document.getElementById('formMessage');
+        const countdownDisplay = document.getElementById('countdown');
+
+        function checkInputs() {
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            
+            // Show/hide error messages
+            nameError.style.display = name ? 'none' : 'block';
+            emailError.style.display = email && validateEmail(email) ? 'none' : 'block';
+            
+            // Enable/disable message box
+            messageBox.disabled = !(name && email && validateEmail(email)) || isWaitingPeriod;
+            
+            if (messageBox.disabled) {
+                if (isWaitingPeriod) {
+                    messageBox.placeholder = 'Please wait for the countdown to finish';
+                } else {
+                    messageBox.placeholder = 'Please fill in name and email first';
+                }
+            } else {
+                messageBox.placeholder = 'Your message';
+            }
+        }
+
+        // Add input event listeners
+        nameInput.addEventListener('input', checkInputs);
+        emailInput.addEventListener('input', checkInputs);
+        
+        // Initial check
+        checkInputs();
+
+        async function checkRateLimitStatus() {
+            try {
+                const fingerprint = await generateFingerprint();
+                
+                const response = await fetch(`${config.SERVER_URL}/api/check-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ fingerprint })
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.waiting) {
+                        isWaitingPeriod = true;
+                        updateCountdown(data.timeLeft);
+                    }
+                }
+            } catch (error) {
+                console.log('Rate limit check failed:', error);
+                // Don't show error to user, just continue
+            }
+        }
+
+        document.getElementById('contactForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            if (isWaitingPeriod) {
+                return;
+            }
+
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const message = messageBox.value.trim();
+
+            if (!name || !email || !message) {
+                formMessage.textContent = 'Please fill in all fields';
+                formMessage.className = 'form-message error';
+                return;
+            }
+
+            if (!validateEmail(email)) {
+                formMessage.textContent = 'Please enter a valid email';
+                formMessage.className = 'form-message error';
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Sending...';
+            formMessage.textContent = 'Preparing to send...';
+            formMessage.className = 'form-message';
+
+            try {
+                const response = await fetch(`${config.SERVER_URL}/api/contact`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name,
+                        email,
+                        message
+                    })
+                });
+
+                if (response.ok) {
+                    formMessage.textContent = 'Message sent successfully!';
+                    formMessage.className = 'form-message success';
+                    // Clear the form
+                    nameInput.value = '';
+                    emailInput.value = '';
+                    messageBox.value = '';
+                } else {
+                    throw new Error('Server returned an error');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                formMessage.textContent = 'Currently unable to send messages. Please try emailing directly or try again later.';
+                formMessage.className = 'form-message error';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Send Message';
+            }
+        });
+
+        function validateEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function updateCountdown(timeLeft) {
+            const countdownElement = document.getElementById('countdown');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            if (!timeLeft) {
+                countdownElement.style.display = 'none';
+                submitBtn.disabled = false;
+                isWaitingPeriod = false;
+                return;
+            }
+
+            function formatTime(ms) {
+                const hours = Math.floor(ms / (60 * 60 * 1000));
+                const minutes = Math.floor((ms % (60 * 60 * 1000)) / (60 * 1000));
+                const seconds = Math.floor((ms % (60 * 1000)) / 1000);
+                return `${hours} hours, ${minutes} minutes, and ${seconds} seconds`;
+            }
+
+            let remainingTime = timeLeft;
+            countdownElement.style.display = 'block';
+            submitBtn.disabled = true;
+            isWaitingPeriod = true;
+            
+            if (countdownInterval) {
+                clearInterval(countdownInterval);
+            }
+
+            function updateDisplay() {
+                if (remainingTime <= 0) {
+                    clearInterval(countdownInterval);
+                    countdownElement.style.display = 'none';
+                    submitBtn.disabled = false;
+                    isWaitingPeriod = false;
+                    return;
+                }
+                
+                const timeString = formatTime(remainingTime);
+                countdownElement.textContent = `Please wait ${timeString} before sending another message`;
+                remainingTime -= 1000;
+            }
+
+            // Initial update
+            updateDisplay();
+            // Update every second
+            countdownInterval = setInterval(updateDisplay, 1000);
+        }
+
+        // Function to find the active server port
+        async function findServerPort() {
+            try {
+                const response = await fetch(`${config.SERVER_URL}/api/check-status`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    return config.SERVER_URL;
+                }
+            } catch (error) {
+                console.log('Error connecting to server:', error.message);
+            }
+            throw new Error('Could not connect to server. Please check your network connection.');
+        }
+
+        async function generateFingerprint() {
+            try {
+                return await generateBrowserFingerprint();
+            } catch (error) {
+                console.error('Failed to generate fingerprint:', error);
+                // Fallback to a simple timestamp-based ID
+                return Date.now().toString(16);
+            }
+        }
+
+        // Check rate limit status on page load
+        async function checkRateLimitStatusOnLoad() {
+            await checkRateLimitStatus();
+        }
+
+        window.addEventListener('load', checkRateLimitStatusOnLoad);
+    </script>
+    <script src="/js/fingerprint.js"></script>
+    <script src="/script.js"></script>
+</body>
+</html>

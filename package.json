@@ -1,0 +1,32 @@
+{
+  "name": "portfolio-contact",
+  "version": "1.0.0",
+  "description": "Professional portfolio website with contact form",
+  "main": "server/server.js",
+  "scripts": {
+    "prestart": "node scripts/cleanup.js",
+    "start": "node server/server.js",
+    "dev": "nodemon server/server.js",
+    "build": "npm install",
+    "deploy": "npm run build && npm start"
+  },
+  "engines": {
+    "node": ">=14.0.0",
+    "npm": ">=6.0.0"
+  },
+  "keywords": ["portfolio", "contact", "nodejs", "express"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "dotenv": "^16.3.1",
+    "express": "^4.18.2",
+    "express-rate-limit": "^7.1.5",
+    "helmet": "^7.1.0",
+    "nodemailer": "^6.9.7"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.9"
+  }
+}

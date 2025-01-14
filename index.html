@@ -1,0 +1,66 @@
+git add contact.html
+git add js/config.js
+git commit -m "Improved contact form error handling and server configuration"
+git push<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>'D'Krishna's Portfolio</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&family=Comfortaa:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="home-page">
+    <nav class="navbar">
+        <div class="logo">'D'Krishna</div>
+        <div class="navigation-buttons">
+            <a href="index.html" class="nav-button active">Home</a>
+            <a href="about.html" class="nav-button">About Me</a>
+            <a href="projects.html" class="nav-button">Projects</a>
+            <a href="contact.html" class="nav-button">Contact Us</a>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="hero-container">
+            <div class="hero-content">
+                <h1>Hello, I'm <span class="highlight">'D'Krishna</span></h1>
+                <div class="dynamic-text">I'm a <span class="typed-text"></span></div>
+                <p class="hero-description">Turning ideas into reality through code</p>
+            </div>
+            <div class="hero-image">
+                <div class="image-container">
+                    <img src="Dipesh.jpg" alt="'D'Krishna" class="profile-image">
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/typed.js@2.0.12"></script>
+    <script src="script.js"></script>
+    <script>
+        document.querySelectorAll('.nav-button').forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault();
+                const href = this.getAttribute('href');
+                
+                document.querySelectorAll('.nav-button').forEach(btn => {
+                    btn.classList.remove('flash');
+                    btn.offsetHeight;
+                });
+                
+                this.classList.add('flash');
+                
+                setTimeout(() => {
+                    window.location.href = href;
+                }, 800);
+            });
+            
+            button.addEventListener('animationend', function() {
+                this.classList.remove('flash');
+            });
+        });
+    </script>
+</body>
+</html>
